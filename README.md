@@ -49,4 +49,5 @@ To compile and run the program, follow these steps:
    gcc -o solver solver.c
 
 2. Run
-     .\solver.exe maze.txt
+   ```bash
+    .\solver.exe maze.txt
