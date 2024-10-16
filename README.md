@@ -17,6 +17,7 @@ This implementation leverages the A* algorithm, which uses both actual and estim
 - **RAM Usage**: RAM consumption grows with the maze size, as the algorithm stores information about explored and unexplored nodes. Large mazes can demand significant memory resources, especially since both `openList` and `closedList` scale with the maze dimensions.
 
 ## Data Structures
+
 - **Node Structure**: 
   - Each node represents a position in the maze and contains:
     - `x` and `y` coordinates.
@@ -25,14 +26,16 @@ This implementation leverages the A* algorithm, which uses both actual and estim
     - `totalEstimatedCost`: Sum of `costFromStart` and `estimatedCostToGoal`.
     - `parent`: A pointer to the previous node, allowing for path reconstruction.
 
-- **Open List**: A dynamic list storing nodes that are yet to be explored. The node with the lowest `totalEstimatedCost` is selected for exploration next.
+- **Open List**: A priority queue (min-heap) is used to store nodes that are yet to be explored, with the node having the lowest `totalEstimatedCost` given the highest priority. This ensures that the node with the best estimated path cost is selected for exploration next.
 
-- **Closed List**: A boolean array marking nodes as explored to prevent revisiting them, improving algorithm efficiency.
+- **Closed List**: A boolean array marking nodes as explored to prevent revisiting them, which helps to improve the efficiency by reducing redundant path explorations.
 
 ## Efficiency
 
-- **Time Complexity**: A* has a worst-case time complexity of \(O(b^d)\), where \(b\) is the branching factor and \(d\) is the depth of the shortest path. While efficient, performance decreases with large mazes and complex paths.
-- **Memory Complexity**: A* stores all possible paths, leading to potentially high memory usage. This limits its applicability in very large search spaces due to RAM constraints.
+- **Time Complexity**: A* has a worst-case time complexity of \(O(b^d)\), where \(b\) is the branching factor and \(d\) is the depth of the shortest path. While generally efficient, its performance can decrease with larger and more complex mazes due to the increased number of nodes in the open list.
+
+- **Memory Complexity**: A* stores all nodes in the open list, which can lead to high memory usage. This limits its scalability in very large mazes, as it requires more RAM to store potential paths.
+
 
 ## Heuristic
 

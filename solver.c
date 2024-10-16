@@ -1,3 +1,6 @@
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -12,7 +15,7 @@ typedef struct Node
     int x, y;
     int costFromStart;
     int estimatedCostToGoal;
-    int totalEstimatedCost;
+    int totalEstimatedCost; 
     struct Node *parent;
 } Node;
 
@@ -23,7 +26,8 @@ int height = 0;
 bool load_maze(const char *filename)
 {
     FILE *file = fopen(filename, "r");
-    if (!file) {
+    if (!file)
+    {
         perror("Error opening the file");
         return false;
     }
@@ -112,15 +116,58 @@ bool is_valid(int x, int y)
     return (x >= 0 && x < width && y >= 0 && y < height && maze[y][x] == '*');
 }
 
+// Insert a node into the priority queue (min-heap)
+void insert_into_queue(Node **queue, int *queue_size, Node *new_node)
+{
+    queue[*queue_size] = new_node;
+    int i = (*queue_size)++;
+    while (i > 0)
+    {
+        int parent = (i - 1) / 2;
+        if (queue[parent]->totalEstimatedCost <= queue[i]->totalEstimatedCost)
+        {
+            break;
+        }
+        Node *temp = queue[i];
+        queue[i] = queue[parent];
+        queue[parent] = temp;
+        i = parent;
+    }
+}
+
+// Remove the node with the smallest totalEstimatedCost from the priority queue
+Node *remove_from_queue(Node **queue, int *queue_size)
+{
+    Node *min_node = queue[0];
+    queue[0] = queue[--(*queue_size)];
+    int i = 0;
+    while (i * 2 + 1 < *queue_size)
+    {
+        int left = i * 2 + 1;
+        int right = left + 1;
+        int smallest = (right < *queue_size && queue[right]->totalEstimatedCost < queue[left]->totalEstimatedCost) ? right : left;
+        if (queue[i]->totalEstimatedCost <= queue[smallest]->totalEstimatedCost)
+        {
+            break;
+        }
+        Node *temp = queue[i];
+        queue[i] = queue[smallest];
+        queue[smallest] = temp;
+        i = smallest;
+    }
+    return min_node;
+}
+
 void a_star(int startX, int startY, int endX, int endY)
 {
-    // Allocate memory for openList and closedList
+    // Initialize openList and closedList
     Node **openList = malloc(width * height * sizeof(Node *));
     if (!openList)
     {
         printf("Error allocating memory for openList");
         return;
     }
+    int openCount = 0;
 
     bool **closedList = malloc(height * sizeof(bool *));
     for (int i = 0; i < height; i++)
@@ -128,9 +175,7 @@ void a_star(int startX, int startY, int endX, int endY)
         closedList[i] = calloc(width, sizeof(bool));
     }
 
-    int openCount = 0;
-    bool found = false;
-    // Start inicial Node
+// Initialize the start node and insert it into the openList
     Node *start = malloc(sizeof(Node));
     start->x = startX;
     start->y = startY;
@@ -138,42 +183,29 @@ void a_star(int startX, int startY, int endX, int endY)
     start->estimatedCostToGoal = heuristic(startX, startY, endX, endY);
     start->totalEstimatedCost = start->costFromStart + start->estimatedCostToGoal;
     start->parent = NULL;
-    openList[openCount++] = start;
+    insert_into_queue(openList, &openCount, start);
 
     Node *current = NULL;
     int dx[] = {0, 0, -1, 1};
     int dy[] = {-1, 1, 0, 0};
+    bool found = false;
 
     while (openCount > 0)
     {
 
-        // Find the node with the smallest totalEstimatedCost in the openList
-        int idx = 0;
-        for (int i = 1; i < openCount; i++)
-        {
-            if (openList[i]->totalEstimatedCost < openList[idx]->totalEstimatedCost)
-            {
-                idx = i;
-            }
-        }
-        current = openList[idx];
+        // Remove the node with the smallest totalEstimatedCost from the openList
+        current = remove_from_queue(openList, &openCount);
 
-        // Check if the current node is the goal
+// Check if the current node is the goal node
         if (current->x == endX && current->y == endY)
         {
             found = true;
             break;
         }
 
-        // Remove the current node from the openList
-        for (int i = idx; i < openCount - 1; i++)
-        {
-            openList[i] = openList[i + 1];
-        }
-        openCount--;
         closedList[current->y][current->x] = true;
 
-        // Check the neighbors of the current node
+    // Expand the current node
         for (int i = 0; i < 4; i++)
         {
             int nx = current->x + dx[i];
@@ -182,10 +214,12 @@ void a_star(int startX, int startY, int endX, int endY)
             if (is_valid(nx, ny) && !closedList[ny][nx])
             {
                 int newCostFromStart = current->costFromStart + 1;
+
+                // Check if the neighbor node is in the openList
                 bool inOpenList = false;
-                // Check if the neighbor is in the openList
                 for (int j = 0; j < openCount; j++)
                 {
+                    
                     if (openList[j]->x == nx && openList[j]->y == ny)
                     {
                         inOpenList = true;
@@ -198,7 +232,8 @@ void a_star(int startX, int startY, int endX, int endY)
                         break;
                     }
                 }
-                // Add the neighbor to the openList
+
+                // If the neighbor node is not in the openList, add it to the openList
                 if (!inOpenList)
                 {
                     Node *neighbor = malloc(sizeof(Node));
@@ -208,13 +243,12 @@ void a_star(int startX, int startY, int endX, int endY)
                     neighbor->estimatedCostToGoal = heuristic(nx, ny, endX, endY);
                     neighbor->totalEstimatedCost = neighbor->costFromStart + neighbor->estimatedCostToGoal;
                     neighbor->parent = current;
-                    openList[openCount++] = neighbor;
+                    insert_into_queue(openList, &openCount, neighbor);
                 }
             }
         }
     }
 
-    // Print the path
     if (found)
     {
         while (current)
@@ -230,9 +264,9 @@ void a_star(int startX, int startY, int endX, int endY)
     }
     else
     {
-        printf("\n\n\n\n--------------no solution found--------------\n");
+        printf("No solution found\n");
     }
-    // Free memory
+
     for (int i = 0; i < openCount; i++)
     {
         free(openList[i]);
@@ -248,7 +282,6 @@ void a_star(int startX, int startY, int endX, int endY)
 
 int main(int argc, char *argv[])
 {
-
     // Load Maze
     if (!load_maze(argv[1]))
     {
@@ -258,7 +291,6 @@ int main(int argc, char *argv[])
     printf("--------------Maze loaded successfully--------------\n");
     printf("--------------Finding Solution----------------------\n");
 
-
     clock_t start = clock();
     a_star(0, 0, width - 1, height - 1);
 
@@ -267,13 +299,11 @@ int main(int argc, char *argv[])
         free(maze[i]);
     }
     free(maze);
-
     clock_t end = clock();
-    
+
     // Calculate the elapsed time in seconds
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("\n\nSolution time: %f seconds\n", elapsed_time);
-
 
     return 0;
 }
