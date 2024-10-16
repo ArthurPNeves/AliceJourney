@@ -22,7 +22,7 @@ This implementation leverages the A* algorithm, which uses both actual and estim
   - Each node represents a position in the maze and contains:
     - `x` and `y` coordinates.
     - `costFromStart`: Cost from the start node.
-    - `estimatedCostToGoal`: Heuristic estimate to the goal.
+    - `estimatedCostToGoal`: Heuristic estimate to the goal. 
     - `totalEstimatedCost`: Sum of `costFromStart` and `estimatedCostToGoal`.
     - `parent`: A pointer to the previous node, allowing for path reconstruction.
 

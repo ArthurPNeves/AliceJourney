@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    printf("--------------Maze loaded successfully--------------\n");
+    printf("--------------Maze %dx%d loaded successfully--------------\n", width, height);
     printf("--------------Finding Solution----------------------\n");
 
     clock_t start = clock();
